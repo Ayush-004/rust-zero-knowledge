@@ -98,17 +98,17 @@ mod test {
         let x = BigUint::from(6u32);
         let k = ZKP::generate_random_below(&zkp.q);
         let c = ZKP::generate_random_below(&zkp.q);
-        let y1 = zkp.exponentiate(&alpha, &x, &p);
-        let y2 = zkp.exponentiate(&beta, &x, &p);
+        let y1 = ZKP::exponentiate(&zkp.alpha, &x, &zkp.p);
+        let y2 = ZKP::exponentiate(&zkp.beta, &x, &zkp.p);
         assert_eq!(y1, BigUint::from(2u32));
         assert_eq!(y2, BigUint::from(3u32));
 
-        let r1 = zkp.exponentiate(&alpha, &k, &p);
-        let r2 = zkp.exponentiate(&beta, &k, &p);
+        let r1 = ZKP::exponentiate(&zkp.alpha, &k, &zkp.p);
+        let r2 = ZKP::exponentiate(&zkp.beta, &k, &zkp.p);
 
         let s = zkp.response(&k, &c, &x);
 
-        let result = zkp.verify(&r1, &r2, &y1, &y2, &alpha, &beta);
+        let result = zkp.verify(&r1, &r2, &y1, &y2, &c, &s);
         assert!(result);
     }
 }
