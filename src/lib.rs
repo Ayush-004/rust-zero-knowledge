@@ -91,10 +91,6 @@ mod test {
             alpha: BigUint::from(4u32),
             beta: BigUint::from(9u32),
         };
-        let alpha = BigUint::from(4u32);
-        let beta = BigUint::from(9u32);
-        let p = BigUint::from(23u32);
-        let q = BigUint::from(11u32);
         let x = BigUint::from(6u32);
         let k = ZKP::generate_random_below(&zkp.q);
         let c = ZKP::generate_random_below(&zkp.q);
