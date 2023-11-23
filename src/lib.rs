@@ -1,4 +1,5 @@
 use num_bigint::{BigUint,RandBigInt};
+use rand::rngs::OsRng;
 
 /// Performs modular exponentiation.
 ///
@@ -28,7 +29,6 @@ pub fn response(k: &BigUint, c: &BigUint, x: &BigUint, q: &BigUint) -> BigUint {
    // First, ensure c * x is within the modulus
    let c_x_mod_q = (c * x) % q;
 
-   // Now add q to k, and then perform the subtraction and modulus
    let k_plus_q = k + q;
    (k_plus_q - c_x_mod_q) % q
 }
@@ -56,13 +56,16 @@ pub fn verify(r1: &BigUint,r2: &BigUint, y1: &BigUint,y2:&BigUint,alpha: &BigUin
    // If both conditions are true, the verification succeeds
    cond1 && cond2
 }
-
+/// Generates a random `BigUint` value below a specified bound.
 pub fn generate_random_below(bound: &BigUint)-> BigUint{
-   let mut rng = rand::thread_rng();
+   let mut rng = OsRng;
    rng.gen_biguint_below(bound)
 }
 #[cfg(test)]
 mod test{
+   /// Test module for validating the cryptographic functions in a simulated environment.
+   /// This test uses randomly generated values for nonce and challenge to simulate a
+   /// zero-knowledge proof scenario.
    use super::*;
    #[test]
    fn test_toy_example_with_random_numbers(){
