@@ -1,0 +1,49 @@
+syntax = "proto3";
+package  zkp_auth;
+
+
+//Prover registers in the server sending y1,y2
+// y1 = alpha^x mod p
+// y2 = beta^x mod p
+message RegisterRequest{
+  string name =1;
+  //to store BigUint, we use bytes, we'll have to serialize them to send and serilaise in server.
+  bytes y1 = 2;
+  bytes y2=3;
+}
+message RegisterResponse{
+
+}
+/*
+Prover ask for challenge in the server sending
+r1=alpha^k mod p
+r2 = beta^k mod p
+Verifier sends the challenge "c" back
+ */
+message AuthenticationChallengeRequest{
+  string user =1;
+  bytes r1=2;
+  bytes r2=3;
+}
+message AuthenticationChallengeResponse{
+  string auth_id=1;//request auth_id from client
+  bytes c =2;
+}
+
+/*
+Prover send solution "s" to the challenge
+Verifier sends the session ID if the solution is correct
+ */
+
+message AuthenticationAnswerRequest{
+  string auth_id=1;//send auth_id to server
+  bytes c =2;
+}
+message AuthenticationAnswerResponse{
+  string session_id=1; //send session_id if everything worked fine
+}
+service Auth{
+  rpc Register(RegisterRequest) returns (RegisterResponse){}
+  rpc CreateAuthenticationChallenge(AuthenticationChallengeRequest) returns (AuthenticationChallengeResponse){}
+  rpc VerifyAuthentication(AuthenticationAnswerRequest) returns (AuthenticationAnswerResponse){}
+}
