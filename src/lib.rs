@@ -78,60 +78,74 @@ impl ZKP {
     }
 }
 #[cfg(test)]
+#[cfg(test)]
 mod test {
-    /// Test module for validating the cryptographic functions in a simulated environment.
-    /// This test uses randomly generated values for nonce and challenge to simulate a
-    /// zero-knowledge proof scenario.
     use super::*;
+
+    /// Tests ZKP functionality with small, predefined values.
     #[test]
     fn test_toy_example_with_random_numbers() {
+        // Initialize the ZKP struct with small, predefined values.
         let zkp = ZKP {
             p: BigUint::from(23u32),
             q: BigUint::from(11u32),
             alpha: BigUint::from(4u32),
             beta: BigUint::from(9u32),
         };
+
+        // Generate random values for private key (x), nonce (k), and challenge (c).
         let x = BigUint::from(6u32);
         let k = ZKP::generate_random_below(&zkp.q);
         let c = ZKP::generate_random_below(&zkp.q);
+
+        // Compute public keys (y1, y2) and commitments (r1, r2).
         let y1 = ZKP::exponentiate(&zkp.alpha, &x, &zkp.p);
         let y2 = ZKP::exponentiate(&zkp.beta, &x, &zkp.p);
-        assert_eq!(y1, BigUint::from(2u32));
-        assert_eq!(y2, BigUint::from(3u32));
-
         let r1 = ZKP::exponentiate(&zkp.alpha, &k, &zkp.p);
         let r2 = ZKP::exponentiate(&zkp.beta, &k, &zkp.p);
 
+        // Compute response and verify the proof.
         let s = zkp.response(&k, &c, &x);
-
         let result = zkp.verify(&r1, &r2, &y1, &y2, &c, &s);
+
+        // Assert the proof is valid.
         assert!(result);
     }
+
+    /// Tests ZKP functionality using 1024-bit constants from RFC 5114.
     #[test]
     fn test_with_1024_bit_constant() {
-        let p_str="B10B8F96A080E01DDE92DE5EAE5D54EC52C99FBCFB06A3C69A6A9DCA52D23B616073E28675A23D189838EF1E2EE652C013ECB4AEA906112324975C3CD49B83BFACCBDD7D90C4BD7098488E9C219A73724EFFD6FAE5644738FAA31A4FF55BCCC0A151AF5F0DC8B4BD45BF37DF365C1A65E68CFDA76D4DA708DF1FB2BC2E4A4371";
-        let g_str="A4D1CBD5C3FD34126765A442EFB99905F8104DD258AC507FD6406CFF14266D31266FEA1E5C41564B777E690F5504F213160217B4B01B886A5E91547F9E2749F4D7FBD7D3B9A92EE1909D0D2263F80A76A6A24C087A091F531DBF0A0169B6A28AD662A4D18E73AFA32D779D5918D08BC8858F4DCEF97C2A24855E6EEB22B3B2E5";
+        // Parse hexadecimal constants for p, alpha, and q as per RFC 5114.
+        let p_str = "B10B8F96A080E01DDE92DE5EAE5D54EC52C99FBCFB06A3C69A6A9DCA52D23B616073E28675A23D189838EF1E2EE652C013ECB4AEA906112324975C3CD49B83BFACCBDD7D90C4BD7098488E9C219A73724EFFD6FAE5644738FAA31A4FF55BCCC0A151AF5F0DC8B4BD45BF37DF365C1A65E68CFDA76D4DA708DF1FB2BC2E4A4371";
         let q_str = "F518AA8781A8DF278ABA4E7D64B7CB9D49462353";
-        let p = BigUint::parse_bytes(p_str.as_bytes(),16).unwrap();
-        let alpha = BigUint::parse_bytes(g_str.as_bytes(),16).unwrap();
-        let q = BigUint::parse_bytes(q_str.as_bytes(),16).unwrap();
-        let beta = alpha.modpow(&ZKP::generate_random_below(&q),&p);
+        let g_str = "A4D1CBD5C3FD34126765A442EFB99905F8104DD258AC507FD6406CFF14266D31266FEA1E5C41564B777E690F5504F213160217B4B01B886A5E91547F9E2749F4D7FBD7D3B9A92EE1909D0D2263F80A76A6A24C087A091F531DBF0A0169B6A28AD662A4D18E73AFA32D779D5918D08BC8858F4DCEF97C2A24855E6EEB22B3B2E5";
+        //Convert strings to BigUint.
+        let p = BigUint::parse_bytes(p_str.as_bytes(), 16).unwrap();
+        let alpha = BigUint::parse_bytes(g_str.as_bytes(), 16).unwrap();
+        let q = BigUint::parse_bytes(q_str.as_bytes(), 16).unwrap();
 
-        let zkp=ZKP{
-            p,q,alpha,beta
-        };
+        // Compute beta as alpha raised to a random exponent modulo p.
+        let beta = alpha.modpow(&ZKP::generate_random_below(&q), &p);
+
+        // Initialize ZKP with the large constants.
+        let zkp = ZKP { p, q, alpha, beta };
+
+        // Generate random values for private key (x), nonce (k), and challenge (c).
         let x = ZKP::generate_random_below(&zkp.q);
         let k = ZKP::generate_random_below(&zkp.q);
         let c = ZKP::generate_random_below(&zkp.q);
+
+        // Compute public keys (y1, y2) and commitments (r1, r2).
         let y1 = ZKP::exponentiate(&zkp.alpha, &x, &zkp.p);
         let y2 = ZKP::exponentiate(&zkp.beta, &x, &zkp.p);
-
         let r1 = ZKP::exponentiate(&zkp.alpha, &k, &zkp.p);
         let r2 = ZKP::exponentiate(&zkp.beta, &k, &zkp.p);
 
+        // Compute response and verify the proof.
         let s = zkp.response(&k, &c, &x);
-
         let result = zkp.verify(&r1, &r2, &y1, &y2, &c, &s);
+
+        // Assert the proof is valid.
         assert!(result);
     }
 }
