@@ -94,7 +94,7 @@ mod test {
         };
 
         // Generate random values for private key (x), nonce (k), and challenge (c).
-        let x = BigUint::from(6u32);
+        let x = ZKP::generate_random_below(&zkp.q);
         let k = ZKP::generate_random_below(&zkp.q);
         let c = ZKP::generate_random_below(&zkp.q);
 
