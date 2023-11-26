@@ -6,7 +6,7 @@
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RegisterRequest {
     #[prost(string, tag = "1")]
-    pub name: ::prost::alloc::string::String,
+    pub user: ::prost::alloc::string::String,
     /// Serialized BigUint representing y1 (alpha^x mod p).
     #[prost(bytes = "vec", tag = "2")]
     pub y1: ::prost::alloc::vec::Vec<u8>,
@@ -52,7 +52,7 @@ pub struct AuthenticationAnswerRequest {
     #[prost(string, tag = "1")]
     pub auth_id: ::prost::alloc::string::String,
     #[prost(bytes = "vec", tag = "2")]
-    pub c: ::prost::alloc::vec::Vec<u8>,
+    pub s: ::prost::alloc::vec::Vec<u8>,
 }
 /// Response message for the authentication answer request.
 /// Contains a session_id which is issued if the solution is verified

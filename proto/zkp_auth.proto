@@ -7,7 +7,7 @@ package  zkp_auth;
 // the results of raising alpha and beta to the power of x modulo p,
 // respectively.
 message RegisterRequest{
-  string name =1;
+  string user =1;
   // Serialized BigUint representing y1 (alpha^x mod p).
   bytes y1 = 2;
   // Serialized BigUint representing y2 (beta^x mod p).
@@ -41,7 +41,7 @@ message AuthenticationChallengeResponse{
 
 message AuthenticationAnswerRequest{
   string auth_id=1;//send auth_id to server
-  bytes c =2;
+  bytes s =2;
 }
 // Response message for the authentication answer request.
 // Contains a session_id which is issued if the solution is verified
