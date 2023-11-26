@@ -94,5 +94,5 @@ async fn main() {
         .expect("Could not verify authentication in server")
         .into_inner();
 
-    println!("✅Logging successful! session_id: {}", response.session_id);
+    println!("Logging successful! session_id: {}", response.session_id);
 }

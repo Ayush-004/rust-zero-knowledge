@@ -40,11 +40,10 @@ impl ZKP {
     /// The response `s` calculated as `(k - c * x) mod q`.
     /// If `k < c * x`, it correctly handles the modulus of the negative result.
     pub fn response(&self, k: &BigUint, c: &BigUint, x: &BigUint) -> BigUint {
-        // First, ensure c * x is within the modulus
-        let c_x_mod_q = (c * x) % &self.q;
-
-        let k_plus_q = k + &self.q;
-        (k_plus_q - c_x_mod_q) % &self.q
+        if *k >= c * x {
+            return (k - c * x).modpow(&BigUint::from(1u32), &self.q);
+        }
+        &self.q - (c * x - k).modpow(&BigUint::from(1u32), &self.q)
     }
     /// Verifies the correctness of a zero-knowledge proof.
     ///
@@ -71,9 +70,9 @@ impl ZKP {
         s: &BigUint,
     ) -> bool {
         // Check the first condition: r1 == (alpha^s * y1^c) mod p
-        let cond1 = *r1 == (&self.alpha.modpow(s, &self.p) * y1.modpow(c, &self.p)) % &self.p;
+        let cond1 = *r1 == (&self.alpha.modpow(s, &self.p) * y1.modpow(c, &self.p)).modpow(&BigUint::from(1u32), &self.p);
         // Check the second condition: r2 == (beta^s * y2^c) mod p
-        let cond2 = *r2 == (&self.beta.modpow(s, &self.p) * y2.modpow(c, &self.p)) % &self.p;
+        let cond2 = *r2 == (&self.beta.modpow(s, &self.p) * y2.modpow(c, &self.p)) .modpow(&BigUint::from(1u32), &self.p);
         // If both conditions are true, the verification succeeds
         cond1 && cond2
     }

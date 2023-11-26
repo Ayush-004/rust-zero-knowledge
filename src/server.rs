@@ -1,6 +1,6 @@
-use std::hash::Hash;
+
 // Import necessary modules from Tonic and other dependencies.
-use tonic::{transport::Server, Code, Request, Response,Status,codegen::http::request};
+use tonic::{transport::Server, Code, Request, Response,Status};
 use num_bigint::BigUint;
 use std::sync::Mutex;
 use std::collections::HashMap;
@@ -77,7 +77,7 @@ impl Auth for AuthImpl{
             user_info.r1 = BigUint::from_bytes_be(&request.r1);
             user_info.r2 =BigUint::from_bytes_be(&request.r2);
 
-            let mut auth_id_to_user_map = &mut self.auth_id_to_user.lock().unwrap();
+            let auth_id_to_user_map = &mut self.auth_id_to_user.lock().unwrap();
             auth_id_to_user_map.insert(auth_id.clone(),user_name);
 
             Ok(Response::new(AuthenticationChallengeResponse{auth_id,c:c.to_bytes_be()}))
@@ -88,47 +88,59 @@ impl Auth for AuthImpl{
     // Implement the `verify_authentication` method.
     // This method handles requests to verify an authentication response.
 // Asynchronously verifies the authentication response
-    async fn verify_authentication(&self, request: Request<AuthenticationAnswerRequest>) -> Result<Response<AuthenticationAnswerResponse>, Status> {
-        println!("Processing verification ");
-        let request = request.into_inner(); // Extracts the inner details from the gRPC request
+async fn verify_authentication(
+    &self,
+    request: Request<AuthenticationAnswerRequest>,
+) -> Result<Response<AuthenticationAnswerResponse>, Status> {
+    let request = request.into_inner();
 
-        let auth_id = request.auth_id; // Retrieves the authentication ID from the request
+    let auth_id = request.auth_id;
+    println!("Processing Challenge Solution auth_id: {:?}", auth_id);
 
-        // Attempt to retrieve the username associated with the provided auth_id
-        let user_name_option = {
-            let auth_id_to_user_map = self.auth_id_to_user.lock().unwrap(); // Locks the auth_id to user map to ensure thread-safe access
-            auth_id_to_user_map.get(&auth_id).cloned() // Retrieves and clones the username if present
-        };
+    let auth_id_to_user_hashmap = &mut self.auth_id_to_user.lock().unwrap();
 
-        // Check if the username was successfully retrieved
-        if let Some(user_name) = user_name_option {
-            let mut user_info_map = self.user_info.lock().unwrap(); // Locks the user_info map for thread-safe access
+    if let Some(user_name) = auth_id_to_user_hashmap.get(&auth_id) {
+        let user_info_hashmap = &mut self.user_info.lock().unwrap();
+        let user_info = user_info_hashmap
+            .get_mut(user_name)
+            .expect("AuthId not found on hashmap");
 
-            // Attempt to retrieve mutable user information for the given username
-            if let Some(user_info) = user_info_map.get_mut(&user_name) {
-                let (alpha, beta, p, q) = ZKP::get_constants(); // Retrieves constants used in the ZKP process
-                let zkp = ZKP { alpha, beta, p, q }; // Initializes a ZKP structure with these constants
+        let s = BigUint::from_bytes_be(&request.s);
+        user_info.s = s;
 
-                // Verifies the user's response to the authentication challenge
-                let verification = zkp.verify(&user_info.r1, &user_info.r2, &user_info.y1, &user_info.y2, &user_info.c, &user_info.s);
+        let (alpha, beta, p, q) = ZKP::get_constants();
+        let zkp = ZKP { alpha, beta, p, q };
 
-                // If verification is successful
-                if verification {
-                    let session_id = ZKP::generate_random_string(12); // Generate a random session ID
-                    Ok(Response::new(AuthenticationAnswerResponse { session_id })) // Send back a successful response with the session ID
-                } else {
-                    // If verification fails, deny permission
-                    Err(Status::new(Code::PermissionDenied, format!("AuthId: {} bad solution to the challenge", auth_id)))
-                }
-            } else {
-                // If user information for the given username is not found, deny permission
-                Err(Status::new(Code::PermissionDenied, format!("AuthId: {} bad solution to the challenge", auth_id)))
-            }
+        let verification = zkp.verify(
+            &user_info.r1,
+            &user_info.r2,
+            &user_info.y1,
+            &user_info.y2,
+            &user_info.c,
+            &user_info.s,
+        );
+
+        if verification {
+            let session_id = ZKP::generate_random_string(12);
+
+            println!("Correct Challenge Solution username: {:?}", user_name);
+
+            Ok(Response::new(AuthenticationAnswerResponse { session_id }))
         } else {
-            // If the auth_id is not found in the map, return a not found error
-            Err(Status::new(Code::NotFound, format!("AuthId: {} not found in database", auth_id)))
+            println!(" Wrong Challenge Solution username: {:?}", user_name);
+
+            Err(Status::new(
+                Code::PermissionDenied,
+                format!("AuthId: {} bad solution to the challenge", auth_id),
+            ))
         }
+    } else {
+        Err(Status::new(
+            Code::NotFound,
+            format!("AuthId: {} not found in database", auth_id),
+        ))
     }
+}
 }
 #[tokio::main]
 async fn main() {
