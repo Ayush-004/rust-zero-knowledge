@@ -57,34 +57,43 @@ impl Auth for AuthImpl{
     }
     // Implement the `create_authentication_challenge` method.
     // This method handles requests to create an authentication challenge.
-    async fn create_authentication_challenge(&self, request: Request<AuthenticationChallengeRequest>) -> Result<Response<AuthenticationChallengeResponse>,Status>{
+// Asynchronous function to create an authentication challenge.
+    async fn create_authentication_challenge(&self, request: Request<AuthenticationChallengeRequest>) -> Result<Response<AuthenticationChallengeResponse>, Status> {
         println!("Processing Authentication");
         let request = request.into_inner();
 
         let user_name = request.user;
 
+        // Locking the user_info map to ensure thread-safe access.
         let mut user_info_map = self.user_info.lock().unwrap();
 
-        // Use `get_mut` on the `HashMap` to get a mutable reference to the `UserInfo`
+        // Check if user exists in user_info map and process authentication challenge.
         if let Some(user_info) = user_info_map.get_mut(&user_name) {
 
-            let(_,_,_,q)=ZKP::get_constants();
-            //challenge numbere
+            // Retrieve constants for ZKP (Zero-Knowledge Proof).
+            let (_, _, _, q) = ZKP::get_constants();
+
+            // Generate a random challenge number 'c' and a unique authentication ID 'auth_id'.
             let c = ZKP::generate_random_below(&q);
             let auth_id = ZKP::generate_random_string(12);
 
+            // Store challenge number and received values (r1, r2) in user's info.
             user_info.c = c.clone();
             user_info.r1 = BigUint::from_bytes_be(&request.r1);
-            user_info.r2 =BigUint::from_bytes_be(&request.r2);
+            user_info.r2 = BigUint::from_bytes_be(&request.r2);
 
+            // Map auth_id to user name in auth_id_to_user map.
             let auth_id_to_user_map = &mut self.auth_id_to_user.lock().unwrap();
-            auth_id_to_user_map.insert(auth_id.clone(),user_name);
+            auth_id_to_user_map.insert(auth_id.clone(), user_name);
 
-            Ok(Response::new(AuthenticationChallengeResponse{auth_id,c:c.to_bytes_be()}))
-        }else{
-            Err(Status::new(Code::NotFound,format!("User: {} not found in database",user_name)))
+            // Return authentication challenge response with auth_id and challenge number.
+            Ok(Response::new(AuthenticationChallengeResponse { auth_id, c: c.to_bytes_be() }))
+        } else {
+            // Return error if user is not found in the database.
+            Err(Status::new(Code::NotFound, format!("User: {} not found in database", user_name)))
         }
     }
+
     // Implement the `verify_authentication` method.
     // This method handles requests to verify an authentication response.
 // Asynchronously verifies the authentication response
