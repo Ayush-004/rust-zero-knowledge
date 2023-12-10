@@ -80,7 +80,3 @@ Developing a user-friendly interface for the client.
 Implementing additional protocols and methods within the ZKP framework.
 ### Performance Optimization:
 Profiling and optimizing the application for better performance and scalability.
-
-- Exploring domain-specific languages (DSLs) for defining and implementing cryptographic protocols more intuitively.
-
-This project stands as a testament to the practical application of POPL principles in solving real-world problems in the domain of secure communication and authentication.
