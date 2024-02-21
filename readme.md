@@ -1,8 +1,5 @@
 # Zero-Knowledge Proof Authentication System with Rust and gRPC
 
-## Introduction
-
-Welcome to the repository for our Zero-Knowledge Proof (ZKP) gRPC client/server application.
 
 ## Key Features
 ### Zero-Knowledge Proof Protocol:
